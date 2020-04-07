@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import './widgets/transaction_list.dart';
 import './widgets/new_transaction.dart';
+import './widgets/chart.dart';
 
 import './models/transaction.dart';
 
@@ -16,7 +17,11 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.deepPurple,
           accentColor: Colors.amber,
           fontFamily: 'Quicksand',
-          textTheme: ThemeData.light().textTheme.copyWith(title: TextStyle(fontFamily: 'OpenSans', fontWeight: FontWeight.bold, fontSize: 18)),
+          textTheme: ThemeData.light().textTheme.copyWith(
+              title: TextStyle(
+                  fontFamily: 'OpenSans',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18)),
           appBarTheme: AppBarTheme(
               textTheme: ThemeData.light().textTheme.copyWith(
                   title: TextStyle(
@@ -35,11 +40,21 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final List<Transaction> _userTransactions = [
-    Transaction(
-        id: 't1', title: 'new shoes', amount: 120.00, date: DateTime.now()),
-    Transaction(
-        id: 't2', title: 'groceries', amount: 160.30, date: DateTime.now()),
+    // Transaction(
+    //     id: 't1', title: 'new shoes', amount: 120.00, date: DateTime.now()),
+    // Transaction(
+    //     id: 't2', title: 'groceries', amount: 160.30, date: DateTime.now()),
   ];
+
+  List<Transaction> get _recentTransactions {
+    return _userTransactions.where((tx) {
+      return tx.date.isAfter(
+        DateTime.now().subtract(
+          Duration(days: 7)
+        )
+      );
+    }).toList();
+  }
 
   void _addNewTransaction(String title, double amount) {
     final newTx = Transaction(
@@ -73,14 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: ListView(children: <Widget>[
-        Card(
-          child: Container(
-            width: double.infinity,
-            height: 100,
-            child: Text('Chart'),
-          ),
-          elevation: 5.0,
-        ),
+        Chart(_recentTransactions),
         TransactionList(_userTransactions),
       ]),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
