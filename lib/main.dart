@@ -52,9 +52,27 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final List<Transaction> _userTransactions = [];
   bool _showChart = false;
+
+  // listening to app lifecycles
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print(state);
+  }
+
+  @override
+  dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+  }
 
   List<Transaction> get _recentTransactions {
     return _userTransactions.where((tx) {
@@ -86,6 +104,40 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _userTransactions.removeWhere((item) => item.id == id);
     });
+  }
+
+  Widget _buildLandscapeContent() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          'Show Chart',
+          style: Theme.of(context).textTheme.headline6,
+        ),
+        Switch.adaptive(
+          activeColor: Theme.of(context).accentColor,
+          value: _showChart,
+          onChanged: (val) {
+            setState(() {
+              _showChart = val;
+            });
+          },
+        )
+      ],
+    );
+  }
+
+  List<Widget> _buildPortraitContent(
+      MediaQueryData mediaQuery, AppBar appBar, Widget transactionListWidget) {
+    return [
+      Container(
+          height: (mediaQuery.size.height -
+                  appBar.preferredSize.height -
+                  mediaQuery.padding.top) *
+              0.3,
+          child: Chart(_recentTransactions)),
+      transactionListWidget
+    ];
   }
 
   @override
@@ -126,33 +178,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final pageBody = SafeArea(
         child: ListView(children: <Widget>[
-      if (isLandscape)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Show Chart',
-              style: Theme.of(context).textTheme.headline6,
-            ),
-            Switch.adaptive(
-              activeColor: Theme.of(context).accentColor,
-              value: _showChart,
-              onChanged: (val) {
-                setState(() {
-                  _showChart = val;
-                });
-              },
-            )
-          ],
-        ),
+      if (isLandscape) _buildLandscapeContent(),
       if (!isLandscape)
-        Container(
-            height: (mediaQuery.size.height -
-                    appBar.preferredSize.height -
-                    mediaQuery.padding.top) *
-                0.3,
-            child: Chart(_recentTransactions)),
-      if (!isLandscape) transactionListWidget,
+        ..._buildPortraitContent(mediaQuery, appBar, transactionListWidget),
       if (isLandscape)
         _showChart
             ? Container(
